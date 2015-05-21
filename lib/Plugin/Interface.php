@@ -26,6 +26,54 @@ interface Plugin_Interface
      */
     function handleWebhook($query, $headers, $data);
 
+    /**
+     * @param array $request
+     * @return void
+     */
+    function oauthHandleRedirect($request);
+
+    /**
+     * @param array $params
+     * @return string
+     */
+    function oauthGetRedirectUrl($params = array());
+
+    /**
+     * @param array $connectParams
+     * @param array $redirectParams
+     * @return string
+     */
+    function oauthGetConnectButton($connectParams = array(), $redirectParams = array());
+
+    /**
+     * @param array $params
+     * @return void
+     */
+    function oauthDisconnect($params = array());
+
+    /**
+     * @param string $accessToken
+     * @return mixed
+     */
+    function oauthSetTokenData($accessToken);
+
+    /**
+     * @return string
+     */
+    function oauthGetTokenData();
+
+    /**
+     * @return void
+     * @throws Exception
+     */
+    function oauthValidateConfig();
+
+    /**
+     * @return mixed
+     * @throws Exception
+     */
+    function oauthTest();
+
     /*
      * Available helper methods which CANNOT be overridden by plugins
      */
@@ -58,9 +106,17 @@ interface Plugin_Interface
      * Retrieve config value
      *
      * @param string $path
-     * @return mixed
+     * @return null|string
      */
     function getConfig($path);
+
+    /**
+     * Retrieve plugin information value
+     *
+     * @param string $path
+     * @return null|string|Varien_Simplexml_Element[]
+     */
+    function getPluginInfo($path);
 
     /**
      * Log messages
@@ -80,4 +136,19 @@ interface Plugin_Interface
      */
     function logException(Exception $e);
 
+    /**
+     * Retrieve OAuth url
+     *
+     * @param array $params
+     * @return string
+     */
+    function oauthGetUrl($params = array());
+
+    /**
+     * Retrieve callback url
+     *
+     * @param string $method
+     * @return string
+     */
+    function getCallbackUrl($method);
 }

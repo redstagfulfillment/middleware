@@ -51,6 +51,75 @@ abstract class Plugin_Abstract implements Plugin_Interface
         return FALSE;
     }
 
+    /**
+     * @param array $request
+     * @return void
+     */
+    public function oauthHandleRedirect($request) {}
+
+    /**
+     * @param array $params
+     * @return string
+     */
+    public function oauthGetRedirectUrl($params = array())
+    {
+        $params = array_merge(
+            $params,
+            ['plugin' => $this->code],
+            ['action' => 'redirect']
+        );
+        $query = [];
+        foreach ($params as $key => $value) {
+            $query[] = $key.'/'.$value;
+        }
+        return $this->_getBaseUrl().'oauth.php/'.implode('/', $query).'/';
+    }
+
+    /**
+     * Get the button to setup the OAuth connection
+     *
+     * @param array $connectParams
+     * @param array $redirectParams
+     * @return string
+     */
+    public function oauthGetConnectButton($connectParams = array(), $redirectParams = array()) {}
+
+    /**
+     * Get the button to disconnect from OAuth
+     *
+     * @param array $params
+     * @return void
+     */
+    public function oauthDisconnect($params = array()) {}
+
+    /**
+     * @param string $accessToken
+     * @return mixed
+     */
+    public function oauthSetTokenData($accessToken)
+    {
+        return $this->setState('oauth_access_token', $accessToken);
+    }
+
+    /**
+     * @return string
+     */
+    public function oauthGetTokenData()
+    {
+        return $this->getState('oauth_access_token');
+    }
+
+    /**
+     * @return void
+     * @throws Exception
+     */
+    public function oauthValidateConfig() {}
+
+    /**
+     * @return mixed
+     * @throws Exception
+     */
+    public function oauthTest() {}
 
     /*
      * Available helper methods which CANNOT be overridden by plugins
@@ -83,6 +152,14 @@ abstract class Plugin_Abstract implements Plugin_Interface
      */
     final public function setState($data, $value = NULL)
     {
+        if (is_string($data)) {
+            $data = $this->code.'_'.$data;
+        } elseif (is_array($data)) {
+            foreach ($data as $k => $v) {
+                $data[$this->code.'_'.$k] = $v;
+                unset($data[$k]);
+            }
+        }
         return $this->call('state.set', array('data' => $data, 'value' => $value));
     }
 
@@ -92,6 +169,19 @@ abstract class Plugin_Abstract implements Plugin_Interface
      */
     final public function getState($keys)
     {
+        if (is_string($keys)) {
+            $keys = $this->code.'_'.$keys;
+        } elseif (is_array($keys)) {
+            $keys = array_map(function($key){ return $this->code.'_'.$key; }, $keys);
+        }
+        $data = $this->call('state.get', array($keys));
+        if (is_array($data)) {
+            foreach ($data as $k => $v) {
+                $_k = preg_replace("/^{$this->code}_/", '', $k);
+                $data[$_k] = $data[$k];
+                unset($data[$k]);
+            }
+        }
         return $this->call('state.get', array($keys));
     }
 
@@ -99,11 +189,22 @@ abstract class Plugin_Abstract implements Plugin_Interface
      * Retrieve config value
      *
      * @param string $path
-     * @return mixed
+     * @return null|string
      */
     final public function getConfig($path)
     {
         return $this->middleware->getConfig("plugin/{$this->code}/$path");
+    }
+
+    /**
+     * Retrieve plugin information
+     *
+     * @param string $path
+     * @return null|string|Varien_Simplexml_Element[]
+     */
+    final public function getPluginInfo($path)
+    {
+        return $this->middleware->getPluginInfo("{$this->code}/$path");
     }
 
     /**
@@ -130,6 +231,36 @@ abstract class Plugin_Abstract implements Plugin_Interface
         $this->middleware->logException($e);
     }
 
+    /**
+     * Retrieve OAuth url
+     *
+     * @param array $params
+     * @return string
+     */
+    final public function oauthGetUrl($params = array())
+    {
+        $params = array_merge(
+            $params,
+            ['plugin' => $this->code]
+        );
+        return $this->_getBaseUrl().'oauth.php?'.http_build_query($params, '', '&');
+    }
+
+    /**
+     * Retrieve callback url
+     *
+     * @param string $method
+     * @return string
+     */
+    final public function getCallbackUrl($method)
+    {
+        $params = [
+            'plugin' => $this->code,
+            'method' => $method,
+            'secret_key' => $this->middleware->getConfig('middleware/api/secret_key'),
+        ];
+        return $this->_getBaseUrl().'rpc.php?'.http_build_query($params, '', '&');
+    }
 
     /*
      * DO NOT USE METHODS DECLARED BELOW THIS LINE
@@ -178,5 +309,17 @@ abstract class Plugin_Abstract implements Plugin_Interface
                 $this->middleware);
         }
         return $this->_client;
+    }
+
+    /**
+     * Retrieve base url
+     *
+     * @return string Example: "http://example.com/"
+     */
+    final private function _getBaseUrl()
+    {
+        $baseUrl = trim($this->middleware->getConfig('middleware/system/base_url'));
+        $baseUrl .= substr($baseUrl, -1) != '/' ? '/' : '';
+        return $baseUrl;
     }
 }
