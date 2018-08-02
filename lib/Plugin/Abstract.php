@@ -95,6 +95,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
     /**
      * @param string $accessToken
      * @return mixed
+     * @throws Exception
      */
     public function oauthSetTokenData($accessToken)
     {
@@ -103,6 +104,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
 
     /**
      * @return string
+     * @throws Exception
      */
     public function oauthGetTokenData()
     {
@@ -137,8 +139,9 @@ abstract class Plugin_Abstract implements Plugin_Interface
      * Wrapper for "call" method
      *
      * @param string $method
-     * @param array  $args
+     * @param array $args
      * @return mixed
+     * @throws Exception
      */
     final public function call($method, $args = array())
     {
@@ -149,6 +152,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
      * @param array|string $data
      * @param int|string|array|stdClass|null $value
      * @return mixed
+     * @throws Exception
      */
     final public function setState($data, $value = NULL)
     {
@@ -166,6 +170,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
     /**
      * @param array|string $keys
      * @return array|string
+     * @throws Exception
      */
     final public function getState($keys)
     {
@@ -190,6 +195,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
      *
      * @param string $path
      * @return null|string
+     * @throws Exception
      */
     final public function getConfig($path)
     {
@@ -201,6 +207,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
      *
      * @param string $path
      * @return null|string|Varien_Simplexml_Element[]
+     * @throws Exception
      */
     final public function getPluginInfo($path)
     {
@@ -251,6 +258,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
      *
      * @param string $method
      * @return string
+     * @throws Exception
      */
     final public function getCallbackUrl($method)
     {
@@ -260,6 +268,35 @@ abstract class Plugin_Abstract implements Plugin_Interface
             'secret_key' => $this->middleware->getConfig('middleware/api/secret_key'),
         ];
         return $this->_getBaseUrl().'rpc.php?'.http_build_query($params, '', '&');
+    }
+
+    /**
+     * @param string $key
+     * @return array|null|string
+     */
+    final protected function loadCache($key)
+    {
+        return $this->middleware->loadCache($key);
+    }
+
+    /**
+     * @param string $key
+     * @param string $data
+     * @param bool|int $lifeTime
+     * @throws Exception
+     */
+    final protected function saveCache($key, $data, $lifeTime = FALSE)
+    {
+        $this->middleware->saveCache($key, $data, $lifeTime);
+    }
+
+    /**
+     * Remove Cache matching key
+     * @param $key
+     */
+    final protected function removeCache($key)
+    {
+        $this->middleware->removeCache($key);
     }
 
     /*
@@ -291,6 +328,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
      * Retrieve instance of the JSON client
      *
      * @return Middleware_JsonClient
+     * @throws Exception
      */
     final private function _getClient()
     {
@@ -315,6 +353,7 @@ abstract class Plugin_Abstract implements Plugin_Interface
      * Retrieve base url
      *
      * @return string Example: "http://example.com/"
+     * @throws Exception
      */
     final private function _getBaseUrl()
     {
