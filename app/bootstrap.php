@@ -342,7 +342,7 @@ final class Middleware
     public function saveCache($key, $data, $lifetime)
     {
         $path = BP . DS . 'tmp' . DS . 'cache-'.$key;
-        if ($lifetime === null) {
+        if ($lifetime === FALSE) {
             $lifetime = 7200;
         }
         $expires = $lifetime ? time() + $lifetime : NULL;
@@ -357,7 +357,9 @@ final class Middleware
      */
     public function removeCache($key) {
         $path = BP . DS . 'tmp' . DS . 'cache-'.$key;
-        unlink($path);
+        if (file_exists($path)) {
+            unlink($path);
+        }
     }
 
     /**
