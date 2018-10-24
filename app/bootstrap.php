@@ -342,11 +342,24 @@ final class Middleware
     public function saveCache($key, $data, $lifetime)
     {
         $path = BP . DS . 'tmp' . DS . 'cache-'.$key;
+        if ($lifetime === FALSE) {
+            $lifetime = 7200;
+        }
         $expires = $lifetime ? time() + $lifetime : NULL;
         if ( ! is_writable(dirname($path))) {
             throw new Exception('Cannot write to tmp directory.');
         }
         return !! file_put_contents($path, serialize(array('data' => $data, 'expires' => $expires)));
+    }
+
+    /**
+     * @param $key
+     */
+    public function removeCache($key) {
+        $path = BP . DS . 'tmp' . DS . 'cache-'.$key;
+        if (file_exists($path)) {
+            unlink($path);
+        }
     }
 
     /**
